@@ -6,6 +6,8 @@ const OrbitCameraScript = preload("res://scripts/orbit_camera.gd")
 var _world: WorldGenerator
 var _seed_input: SpinBox
 var _status_label: Label
+var _height_slider: HSlider
+var _resolution_slider: HSlider
 var _rng := RandomNumberGenerator.new()
 
 
@@ -15,7 +17,8 @@ func _ready() -> void:
 	_make_world()
 	_make_camera()
 	_make_ui()
-	_generate_new_world()
+	_load_settings()
+	_generate_world(int(_seed_input.value))
 
 
 func _make_environment() -> void:
@@ -107,6 +110,28 @@ func _make_ui() -> void:
 	_seed_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	seed_row.add_child(_seed_input)
 
+	var height_label := Label.new()
+	height_label.text = "terrain height"
+	layout.add_child(height_label)
+	_height_slider = HSlider.new()
+	_height_slider.min_value = 6
+	_height_slider.max_value = 36
+	_height_slider.step = 1
+	_height_slider.value = 20
+	_height_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.add_child(_height_slider)
+
+	var detail_label := Label.new()
+	detail_label.text = "terrain detail"
+	layout.add_child(detail_label)
+	_resolution_slider = HSlider.new()
+	_resolution_slider.min_value = 64
+	_resolution_slider.max_value = 192
+	_resolution_slider.step = 16
+	_resolution_slider.value = 160
+	_resolution_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.add_child(_resolution_slider)
+
 	var generate_button := Button.new()
 	generate_button.text = "generate world"
 	generate_button.pressed.connect(_generate_from_input)
@@ -140,7 +165,29 @@ func _generate_new_world() -> void:
 
 func _generate_world(seed_value: int) -> void:
 	_status_label.text = "generating terrain..."
+	_world.height_scale = _height_slider.value
+	_world.resolution = int(_resolution_slider.value)
 	_world.generate_world(seed_value)
+	_save_settings(seed_value)
 	_status_label.text = "world ready  /  seed %d  /  %d x %d vertices" % [
 		seed_value, _world.resolution, _world.resolution
 	]
+
+
+func _load_settings() -> void:
+	var config := ConfigFile.new()
+	if config.load("user://pixel.cfg") != OK:
+		return
+	_seed_input.value = int(config.get_value("world", "seed", 12345))
+	_height_slider.value = float(config.get_value("world", "height_scale", 20.0))
+	_resolution_slider.value = float(config.get_value("world", "resolution", 160))
+
+
+func _save_settings(seed_value: int) -> void:
+	var config := ConfigFile.new()
+	config.set_value("world", "seed", seed_value)
+	config.set_value("world", "height_scale", _height_slider.value)
+	config.set_value("world", "resolution", int(_resolution_slider.value))
+	var result := config.save("user://pixel.cfg")
+	if result != OK:
+		push_warning("could not save world settings")
