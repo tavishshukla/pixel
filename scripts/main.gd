@@ -9,6 +9,8 @@ var _seed_input: SpinBox
 var _status_label: Label
 var _height_slider: HSlider
 var _resolution_slider: HSlider
+var _preset_name: LineEdit
+var _preset_list: OptionButton
 var _rng := RandomNumberGenerator.new()
 
 
@@ -19,6 +21,7 @@ func _ready() -> void:
 	_make_camera()
 	_make_ui()
 	_load_settings()
+	_make_preset_controls()
 	_generate_world(int(_seed_input.value))
 
 
@@ -158,6 +161,34 @@ func _make_ui() -> void:
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(_status_label)
 
+	var preset_title := Label.new()
+	preset_title.text = "world presets"
+	layout.add_child(preset_title)
+
+	_preset_name = LineEdit.new()
+	_preset_name.placeholder_text = "name this world"
+	_preset_name.max_length = 32
+	layout.add_child(_preset_name)
+
+	_preset_list = OptionButton.new()
+	_preset_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.add_child(_preset_list)
+
+	var save_preset_button := Button.new()
+	save_preset_button.text = "save preset"
+	save_preset_button.pressed.connect(_save_preset)
+	layout.add_child(save_preset_button)
+
+	var load_preset_button := Button.new()
+	load_preset_button.text = "load selected preset"
+	load_preset_button.pressed.connect(_load_selected_preset)
+	layout.add_child(load_preset_button)
+
+	var delete_preset_button := Button.new()
+	delete_preset_button.text = "delete selected preset"
+	delete_preset_button.pressed.connect(_delete_selected_preset)
+	layout.add_child(delete_preset_button)
+
 	var controls := Label.new()
 	controls.text = "right mouse: orbit\nmouse wheel: zoom\nesc: release mouse"
 	controls.add_theme_color_override("font_color", Color(0.7, 0.76, 0.82))
@@ -208,3 +239,74 @@ func _copy_seed() -> void:
 	var seed_text := str(int(_seed_input.value))
 	DisplayServer.clipboard_set(seed_text)
 	_status_label.text = "copied seed %s" % seed_text
+
+
+func _make_preset_controls() -> void:
+	_refresh_presets()
+
+
+func _refresh_presets(select_name: String = "") -> void:
+	_preset_list.clear()
+	var config := ConfigFile.new()
+	if config.load("user://world_presets.cfg") == OK:
+		var sections := config.get_sections()
+		sections.sort()
+		for preset_name in sections:
+			_preset_list.add_item(preset_name)
+			if preset_name == select_name:
+				_preset_list.select(_preset_list.item_count - 1)
+
+
+func _save_preset() -> void:
+	var preset_name := _preset_name.text.strip_edges()
+	if preset_name.is_empty():
+		_status_label.text = "give the preset a name first"
+		return
+	preset_name = preset_name.replace("/", "-").replace("\\", "-")
+	var config := ConfigFile.new()
+	var load_result := config.load("user://world_presets.cfg")
+	if load_result != OK and load_result != ERR_FILE_NOT_FOUND:
+		_status_label.text = "couldn't read saved presets"
+		return
+	config.set_value(preset_name, "seed", int(_seed_input.value))
+	config.set_value(preset_name, "height_scale", _height_slider.value)
+	config.set_value(preset_name, "resolution", int(_resolution_slider.value))
+	var save_result := config.save("user://world_presets.cfg")
+	if save_result != OK:
+		_status_label.text = "couldn't save preset"
+		return
+	_refresh_presets(preset_name)
+	_status_label.text = "saved preset: %s" % preset_name
+
+
+func _load_selected_preset() -> void:
+	var selected := _preset_list.get_selected_id()
+	if selected < 0:
+		_status_label.text = "pick a preset first"
+		return
+	var preset_name := _preset_list.get_item_text(_preset_list.selected)
+	var config := ConfigFile.new()
+	if config.load("user://world_presets.cfg") != OK:
+		_status_label.text = "couldn't open saved presets"
+		return
+	_seed_input.value = int(config.get_value(preset_name, "seed", 12345))
+	_height_slider.value = float(config.get_value(preset_name, "height_scale", 20.0))
+	_resolution_slider.value = float(config.get_value(preset_name, "resolution", 160))
+	_generate_world(int(_seed_input.value))
+
+
+func _delete_selected_preset() -> void:
+	if _preset_list.selected < 0:
+		_status_label.text = "pick a preset first"
+		return
+	var preset_name := _preset_list.get_item_text(_preset_list.selected)
+	var config := ConfigFile.new()
+	if config.load("user://world_presets.cfg") != OK:
+		_status_label.text = "couldn't open saved presets"
+		return
+	config.erase_section(preset_name)
+	if config.save("user://world_presets.cfg") != OK:
+		_status_label.text = "couldn't delete preset"
+		return
+	_refresh_presets()
+	_status_label.text = "deleted preset: %s" % preset_name
