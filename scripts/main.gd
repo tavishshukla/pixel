@@ -138,6 +138,11 @@ func _make_ui() -> void:
 	generate_button.pressed.connect(_generate_from_input)
 	layout.add_child(generate_button)
 
+	var copy_seed_button := Button.new()
+	copy_seed_button.text = "copy seed"
+	copy_seed_button.pressed.connect(_copy_seed)
+	layout.add_child(copy_seed_button)
+
 	var reset_view_button := Button.new()
 	reset_view_button.text = "reset camera"
 	reset_view_button.pressed.connect(_camera_rig.reset_view)
@@ -197,3 +202,9 @@ func _save_settings(seed_value: int) -> void:
 	var result := config.save("user://pixel.cfg")
 	if result != OK:
 		push_warning("could not save world settings")
+
+
+func _copy_seed() -> void:
+	var seed_text := str(int(_seed_input.value))
+	DisplayServer.clipboard_set(seed_text)
+	_status_label.text = "copied seed %s" % seed_text
