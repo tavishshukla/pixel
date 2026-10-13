@@ -41,6 +41,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
+func reset_view() -> void:
+	_yaw = 0.65
+	_pitch = -0.48
+	distance = 105.0
+	_update_camera()
+
+
 func _update_camera() -> void:
 	if _camera == null:
 		return
