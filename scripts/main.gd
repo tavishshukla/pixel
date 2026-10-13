@@ -4,6 +4,7 @@ const WorldGeneratorScript = preload("res://scripts/world_generator.gd")
 const OrbitCameraScript = preload("res://scripts/orbit_camera.gd")
 
 var _world: WorldGenerator
+var _camera_rig: OrbitCamera
 var _seed_input: SpinBox
 var _status_label: Label
 var _height_slider: HSlider
@@ -67,9 +68,9 @@ func _make_world() -> void:
 
 
 func _make_camera() -> void:
-	var camera_rig: OrbitCamera = OrbitCameraScript.new()
-	camera_rig.name = "OrbitCamera"
-	add_child(camera_rig)
+	_camera_rig = OrbitCameraScript.new()
+	_camera_rig.name = "OrbitCamera"
+	add_child(_camera_rig)
 
 
 func _make_ui() -> void:
@@ -136,6 +137,11 @@ func _make_ui() -> void:
 	generate_button.text = "generate world"
 	generate_button.pressed.connect(_generate_from_input)
 	layout.add_child(generate_button)
+
+	var reset_view_button := Button.new()
+	reset_view_button.text = "reset camera"
+	reset_view_button.pressed.connect(_camera_rig.reset_view)
+	layout.add_child(reset_view_button)
 
 	var random_button := Button.new()
 	random_button.text = "random seed"
