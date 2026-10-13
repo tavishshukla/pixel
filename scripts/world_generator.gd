@@ -13,7 +13,7 @@ func generate_world(seed_value: int) -> void:
 	current_seed = seed_value
 	# Regeneration should replace the old collision body instead of stacking them.
 	if has_node("StaticBody3D"):
-		get_node("StaticBody3D").queue_free()
+		get_node("StaticBody3D").free()
 	var noise := FastNoiseLite.new()
 	noise.seed = seed_value
 	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
