@@ -9,7 +9,10 @@ a procedural world generation playground. the plan is to turn this into a proper
 - basic water, sky and directional lighting
 - orbit camera with zoom
 - seed box so you can revisit a world
+- terrain height and detail sliders
+- slightly different terrain colors for wetter and drier areas
 - random seed button for quick exploring
+- remembers the last seed and settings between launches
 
 ## run it
 
@@ -31,6 +34,8 @@ no asset packs or plugins needed.
 - [x] first 3d terrain prototype
 - [x] seeded generation
 - [x] basic lighting and water
+- [x] terrain height and detail controls
+- [x] save the last-used world settings
 - [ ] terrain settings you can tweak live
 - [ ] biomes and climate
 - [ ] save and load world presets
@@ -48,7 +53,10 @@ pixel/
 │   ├── main.gd
 │   ├── orbit_camera.gd
 │   └── world_generator.gd
-└── project.godot
+├── project.godot
+└── .github/workflows/godot.yml
 ```
+
+github actions also opens the project headlessly and tries to boot the scene on pushes and pull requests.
 
 early days for now. the goal is real features and small commits, not pretending it's finished already.
