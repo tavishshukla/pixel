@@ -48,7 +48,8 @@ func generate_world(seed_value: int) -> void:
 			var elevation := (broad * 0.82 + fine * 0.18) * height_scale
 			elevation = elevation * island_falloff - 1.5
 			var position := Vector3(px, elevation, pz)
-			surface.set_color(_terrain_color(elevation))
+			var moisture := detail.get_noise_2d(px * 0.35, pz * 0.35)
+			surface.set_color(_terrain_color(elevation, moisture))
 			surface.add_vertex(position)
 
 	for z in range(resolution - 1):
@@ -76,12 +77,18 @@ func _terrain_material() -> StandardMaterial3D:
 	return material
 
 
-func _terrain_color(height: float) -> Color:
+func _terrain_color(height: float, moisture: float) -> Color:
 	if height < -1.0:
 		return Color(0.76, 0.70, 0.49)
 	if height < 2.0:
+		if moisture < -0.25:
+			return Color(0.58, 0.53, 0.32)
 		return Color(0.31, 0.48, 0.28)
 	if height < 7.0:
+		if moisture > 0.12:
+			return Color(0.16, 0.34, 0.20)
+		if moisture < -0.28:
+			return Color(0.48, 0.43, 0.29)
 		return Color(0.24, 0.39, 0.23)
 	if height < 12.0:
 		return Color(0.36, 0.37, 0.34)
